@@ -1,0 +1,213 @@
+
+import java.io.File;
+import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageOutputStream;
+import javax.swing.*;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.video.*;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.videoio.Videoio;
+import org.opencv.imgproc.Imgproc;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+
+public class Main {
+	public static JLabel camLabel;
+	public static JFrame mainWindow;
+	public static BufferedImage image;
+	public static VideoCapture capture;
+	public static boolean cameraAc;
+	public static boolean fotoCekti = false;
+	public static Mat resimKopya;
+	public static Mat filtreliResim = null;
+	
+	public static JButton bttnFotoKaydet;
+	public static JButton bttnFotoSil;
+	public static JButton beyazSiyahFilter;
+	public static JButton blurFilter;
+	public static JButton filter2D;
+	
+	public static Thread thread;
+	
+	public static void Camera() {
+	capture = new VideoCapture(0, Videoio.CAP_DSHOW);
+	capture.set(Videoio.CAP_PROP_FRAME_WIDTH, camLabel.getWidth());
+    capture.set(Videoio.CAP_PROP_FRAME_HEIGHT, camLabel.getHeight());
+    cameraAc = true;
+    
+    while (cameraAc) {
+    	Mat resim = new Mat();
+    	capture.read(resim);
+    	setCamLabel(resim);
+    }
+    capture.release();
+	}
+	
+	public static void setCamLabel(Mat resim) {
+		 Mat yeniResim = new Mat();
+		 if (!resim.empty()) {
+		 Imgproc.resize(resim, yeniResim, new Size(camLabel.getWidth(),camLabel.getHeight()));
+		 
+		 MatOfByte matOfByte = new MatOfByte();
+		 Imgcodecs.imencode(".jpg", yeniResim, matOfByte);
+	        byte yeniResimByte[] = matOfByte.toArray();
+	        try {
+	        	image = ImageIO.read(new ByteArrayInputStream(yeniResimByte));
+	            
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	        if (image!= null) {
+	            camLabel.setIcon(new ImageIcon(image));
+	        }}
+	 }
+	 
+	 public static void fotoCek() {
+		 capture = new VideoCapture(0, Videoio.CAP_DSHOW);
+		 Mat resim = new Mat();
+		 capture.read(resim);
+		 resimKopya =  resim;
+		 
+		 cameraAc =  false;
+		 
+		 if(!resim.empty()) {
+			 setCamLabel(resim);
+		 }
+		 
+		capture.release();
+		fotoCekti = true;
+		buttonSetEnabled();
+	 }
+	 
+	 public static void  fotoKaydet() {
+		 cameraAc = true;
+		 if (thread != null && thread.isAlive()) {
+	            try {
+	                thread.join();
+	            } catch (InterruptedException e) {
+	                e.printStackTrace();
+	            }
+	        }
+		    thread = new Thread(Main::Camera);
+	        thread.start();
+	        fotoCekti = false;
+	        buttonSetEnabled();
+		 // prompt for folder
+	 }
+	 public static void fotoSil() {
+		 cameraAc = true;
+		 if (thread != null && thread.isAlive()) {
+	            try {
+	                thread.join();
+	            } catch (InterruptedException e) {
+	                e.printStackTrace();
+	            }
+	        }
+		    thread = new Thread(Main::Camera);
+	        thread.start();
+	        fotoCekti = false;
+	        buttonSetEnabled();
+	 }
+	 
+	public static void MainFrame() {
+		mainWindow = new JFrame("Kamera");
+		
+		JButton bttnFotoCek = new JButton("fotograf cek");
+		bttnFotoCek.setBounds(150,200,150,30);
+		mainWindow.add(bttnFotoCek);
+
+		bttnFotoCek.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				fotoCek();
+			}
+		});
+		bttnFotoKaydet = new JButton("fotografi kaydet");
+		bttnFotoKaydet.setBounds(150,235,150,30);
+		bttnFotoKaydet.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				fotoKaydet();
+			}
+		});
+		bttnFotoSil = new JButton("fotografi sil");
+		bttnFotoSil.setBounds(150,270,150,30);
+		bttnFotoSil.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				fotoSil();
+			}
+		});
+		beyazSiyahFilter = new JButton("beyaz siyah");
+		beyazSiyahFilter.setBounds(300,100,150,30);
+		beyazSiyahFilter.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				FiltersClass filters = new FiltersClass();
+				filters.beyazSiyah();
+			}
+		});
+		
+		blurFilter = new JButton("blur");
+		blurFilter.setBounds(300,135,150,30);
+		blurFilter.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				FiltersClass filters = new FiltersClass();
+				filters.blur();
+			}
+		});
+		
+		filter2D = new JButton("aydinlatma");
+		filter2D.setBounds(300,170,150,30);
+		filter2D.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				FiltersClass filters = new FiltersClass();
+				filters.filter2D();
+			}
+		});
+		
+		camLabel = new JLabel();
+		camLabel.setBounds(150,35,150,100);
+		mainWindow.add(camLabel);
+		
+		buttonSetEnabled();
+		
+		mainWindow.add(bttnFotoKaydet);
+		mainWindow.add(bttnFotoSil);
+		mainWindow.add(beyazSiyahFilter);
+		mainWindow.add(blurFilter);
+		mainWindow.add(filter2D);
+		
+	
+		mainWindow.setSize(500,400);
+		mainWindow.setLayout(null);
+		mainWindow.setVisible(true);
+		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  
+		
+	}
+	
+	public static void buttonSetEnabled() {
+		bttnFotoKaydet.setEnabled(fotoCekti);
+		bttnFotoSil.setEnabled(fotoCekti);
+		beyazSiyahFilter.setEnabled(fotoCekti);
+		blurFilter.setEnabled(fotoCekti);
+		filter2D.setEnabled(fotoCekti);
+	}
+	
+	public static void main( String[] args )
+	   {
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		MainFrame();
+		thread = new Thread(Main::Camera);
+		thread.start();
+		
+}
+	
+}
+	
