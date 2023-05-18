@@ -1,1 +1,66 @@
 
+import java.awt.Image;
+
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.core.Point;
+import org.opencv.core.Size;
+
+public class FiltersClass {
+	int count1 = 0;
+	int count2 = 0;
+	int count3 = 0;
+	
+
+	public void beyazSiyah() {
+		count1++;
+		if((count1 % 2) == 0) {
+			Main.filtreliResim = Main.resimKopya;
+			Main.setCamLabel(Main.filtreliResim);
+		}else {
+			Imgproc.cvtColor(Main.resimKopya, Main.filtreliResim,Imgproc.COLOR_RGB2GRAY);
+			Main.setCamLabel(Main.filtreliResim);
+		}     
+	}
+	
+	public void blur() {
+		count2++;
+		Size size = new Size(150, 100);
+	    Point point = new Point(20, 30);
+	    if (!Main.resimKopya.empty()) {
+		if((count2 % 2) == 0) {
+			Main.filtreliResim = Main.resimKopya;
+			Main.setCamLabel(Main.filtreliResim);
+		}else {
+			Imgproc.blur(Main.resimKopya,Main.filtreliResim, size, point, Core.BORDER_DEFAULT);;
+			Main.setCamLabel(Main.filtreliResim);
+		} }
+	}
+	public void filter2D() {
+		count3++;
+		Mat kernel = Mat.ones(2,2, CvType.CV_32F);
+	      
+	      for(int i = 0; i<kernel.rows(); i++) {
+	         for(int j = 0; j<kernel.cols(); j++) {
+	            double[] m = kernel.get(i, j);
+
+	            for(int k = 1; k<m.length; k++) {
+	               m[k] = m[k]/(2 * 2);
+	            }
+	            kernel.put(i,j, m);
+	         }
+	      }
+	      
+		if((count3 % 2) == 0) {
+			Main.filtreliResim = Main.resimKopya;
+			Main.setCamLabel(Main.filtreliResim);
+		}else {
+			Imgproc.filter2D(Main.resimKopya, Main.filtreliResim, -1, kernel);
+			Main.setCamLabel(Main.filtreliResim);
+		} 
+	}
+	
+	
+}
